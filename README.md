@@ -9,7 +9,15 @@
 
 ## Introduction
 
-WIP
+Sometimes, you want to be able to shard data between thread, because only this
+thread is able to handle the data or you want to load balance between thread.
+
+This is an experiment to try to tackle this issue: https://github.com/bytedance/monoio/issues/213.
+
+## References
+
+- https://github.com/DataDog/glommio/blob/master/examples/sharding.rs
+- https://github.com/bytedance/monoio/issues/213
 
 ## License
 
