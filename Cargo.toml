@@ -1,0 +1,16 @@
+[package]
+name = "sharded-thread"
+version = "0.1.0"
+authors = ["Anthony Griffon <anthony@griffon.one>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "Shard between threads"
+repository = "https://github.com/Miaxos/sharded-thread"
+documentation = "https://docs.rs/sharded-thread/latest/sharded-thread/"
+
+
+[dependencies]
+
+[dev-dependencies]
+insta = "1"                   # A snapshot testing library for Rust
+lazy_static = "1.4"            # A macro for declaring lazily evaluated statics in Rust.
