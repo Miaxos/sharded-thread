@@ -1,14 +1,7 @@
 use std::thread::scope;
-use std::thread::sleep_ms;
-use std::time::Duration;
-use std::time::Instant;
 
-use futures::Future;
 use futures::StreamExt;
-use monoio::{
-    io::{AsyncReadRent, AsyncWriteRent, BufReader, BufWriter, Splitable},
-    net::{TcpListener, TcpStream},
-};
+
 use sharded_thread::queue::SharedQueueChannels;
 use sharded_thread::{mesh::MeshBuilder, shard::Shard};
 
@@ -50,8 +43,6 @@ fn ensure_messages_are_sent_through_the_shard() {
 
                 rt.block_on(async move {
                     let handle = monoio::spawn(async move {
-                        let shard = shard;
-                        // let mut r = shard.receiver().unwrap();
                         let r = shard.receiver();
                         let mut r = r.unwrap();
 
@@ -59,7 +50,6 @@ fn ensure_messages_are_sent_through_the_shard() {
                         assert_eq!(val, 12);
                         let val = r.next().await.unwrap();
                         assert_eq!(val, 1);
-                        ()
                     });
                     handle.await
                 })

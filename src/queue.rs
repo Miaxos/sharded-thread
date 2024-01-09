@@ -2,7 +2,7 @@ use futures::task::AtomicWaker;
 use futures::Stream;
 use sharded_queue::ShardedQueue;
 use std::sync::atomic::AtomicUsize;
-use std::sync::Arc;
+
 use std::task::Poll;
 
 /// A queue that should be available on each thread.
@@ -33,13 +33,13 @@ impl<'a, T> SharedQueueChannels<'a, T> for SharedQueueThreaded<T> {
     fn unbounded(&'a self) -> (Sender<'a, T>, Receiver<'a, T>) {
         let tx = self.sender();
 
-        let rx = Receiver { queue: &self };
+        let rx = Receiver { queue: self };
 
         (tx, rx)
     }
 
     fn sender(&'a self) -> Sender<'a, T> {
-        Sender { queue: &self }
+        Sender { queue: self }
     }
 }
 
@@ -91,7 +91,7 @@ impl<'a, T> Stream for Receiver<'a, T> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::atomic::AtomicUsize;
+    
 
     use super::SharedQueueChannels;
     use super::SharedQueueThreaded;

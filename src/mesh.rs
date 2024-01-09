@@ -2,21 +2,18 @@
 
 use std::{
     cell::Cell,
-    num::NonZeroUsize,
-    sync::{atomic::AtomicUsize, Arc, Mutex},
-    thread::scope,
+    sync::{atomic::AtomicUsize, Arc},
 };
 
-use non_blocking_mutex::non_blocking_mutex::NonBlockingMutex;
-
 use crate::{
-    queue::{Receiver, Sender, SharedQueueChannels, SharedQueueThreaded},
+    queue::{SharedQueueChannels, SharedQueueThreaded},
     shard::Shard,
 };
 
 /// A Mesh is a structure which can be shared in every thread by reference to allow threads to join
 /// the Mesh and talk to each others.
 pub struct MeshBuilder<T> {
+    #[allow(dead_code)]
     nr_peers: usize,
     pub channels: Vec<SharedQueueThreaded<T>>,
     pub position: Arc<AtomicUsize>,
@@ -29,7 +26,7 @@ impl<'a, T> MeshBuilder<T> {
 
         let mut channels = Vec::with_capacity(nr_peers);
 
-        for i in 0..nr_peers {
+        for _i in 0..nr_peers {
             channels.push(SharedQueueThreaded::<T>::new(nr_peers)?);
         }
 
