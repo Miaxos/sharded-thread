@@ -91,7 +91,6 @@ impl<'a, T> Stream for Receiver<'a, T> {
 
 #[cfg(test)]
 mod tests {
-    
 
     use super::SharedQueueChannels;
     use super::SharedQueueThreaded;
