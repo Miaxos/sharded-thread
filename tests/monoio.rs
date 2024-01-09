@@ -95,6 +95,10 @@ fn load_balance_tcp() {
         let addr = "127.0.0.1:12345";
 
         let mut handles = Vec::new();
+        // We will run monoio on 3 separate cpu & 3 separate thread.
+        // - One Tcp server which will accept the connection and send the fd to the proper thread
+        // - One tcp client which will connect with the tcp server
+        // - One which will receive the fd and respond to the client and close the connection.
         for cpu in 0..cpus {
             let handle = scope.spawn(move || {
                 monoio::utils::bind_to_cpu_set(Some(cpu)).unwrap();
@@ -113,6 +117,7 @@ fn load_balance_tcp() {
                 };
 
                 if cpu == 2 {
+                    // - One tcp client which will connect with the tcp server
                     rt.block_on(async move {
                         let result = monoio::time::timeout(Duration::from_secs(3), async move {
                             loop {
@@ -134,6 +139,7 @@ fn load_balance_tcp() {
                     rt.block_on(async move {
                         let handle = monoio::spawn(async move {
                             if cpu == 0 {
+                                // - One Tcp server which will accept the connection and send the fd to the proper thread
                                 let handle = monoio::spawn(async move {
                                     let srv = TcpListener::bind(addr).unwrap();
                                     let (server_stream, _) = srv.accept().await.unwrap();
@@ -153,11 +159,13 @@ fn load_balance_tcp() {
                                     .await
                                     .unwrap();
                             } else {
+                                // - One which will receive the fd and respond to the client and close the connection.
+                                // cpu = 1
+                                //
                                 let receiver = shard.receiver();
                                 let mut receiver = receiver.unwrap();
                                 let fd = receiver.next().await.unwrap();
 
-                                // monoio::time::sleep(Duration::from_millis(100)).await;
                                 let mut tcp = unsafe { std::net::TcpStream::from_raw_fd(fd) };
                                 let b = tcp.write(b"hi mom").unwrap();
                                 tcp.flush().unwrap();
