@@ -7,6 +7,13 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/miaxos/sharded-thread/compare)
 
 
+"*Application tail latency is critical for services to meet their latency 
+expectations. We have shown that the thread-per-core approach can reduce 
+application tail latency of a key-value store by up to 71% compared to baseline 
+Memcached running on commodity hardware and Linux.*"[^1]
+
+[^1]: [The Impact of Thread-Per-Core Architecture on Application Tail Latency](https://helda.helsinki.fi/server/api/core/bitstreams/3142abaa-16e3-4ad0-beee-e62add589fc4/content)
+
 ## Introduction
 
 This library is mainly made for `io-uring` and monoio. There are no dependency
@@ -25,6 +32,11 @@ want to change the thread handling the stream.
 <p align="center">
     <img src="./.github/ressources/sharded-thread.drawio.svg" width="60%" />
 </p>
+
+It allows you to avoid sharing data between thread, and so avoid a lot of issues
+like false sharing[^2].
+
+[^2]: An excellent article explaining it: [alic.dev](https://alic.dev/blog/false-sharing).
 
 You can check the code for this example here: WIP
 
