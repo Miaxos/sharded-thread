@@ -1,5 +1,5 @@
 use std::io::{BufWriter, Read, Write};
-use std::os::fd::{AsRawFd, FromRawFd, RawFd};
+use std::os::fd::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 use std::thread::scope;
 use std::time::Duration;
 
@@ -7,7 +7,9 @@ use futures::StreamExt;
 
 use monoio::buf::VecBuf;
 use monoio::io::as_fd::AsReadFd;
-use monoio::io::{AsyncReadRent, AsyncReadRentExt, OwnedReadHalf, OwnedWriteHalf, Splitable};
+use monoio::io::{
+    AsyncReadRent, AsyncReadRentExt, AsyncWriteRent, OwnedReadHalf, OwnedWriteHalf, Splitable,
+};
 use monoio::net::{TcpListener, TcpStream};
 use sharded_thread::queue::SharedQueueChannels;
 use sharded_thread::{mesh::MeshBuilder, shard::Shard};
@@ -123,10 +125,10 @@ fn load_balance_tcp() {
                             loop {
                                 if let Ok(mut client_stream) = TcpStream::connect(addr).await {
                                     // client_stream.set_nodelay(true).unwrap();
-                                    let buf = Box::new([0u8; 6]);
+                                    let buf = Box::new([0u8; 9]);
                                     let (_, buf) = client_stream.read_exact(buf).await;
 
-                                    assert_eq!(buf.as_slice(), b"hi mom");
+                                    assert_eq!(buf.as_slice(), b"hello mom");
                                     break;
                                 }
                             }
@@ -143,13 +145,7 @@ fn load_balance_tcp() {
                                 let handle = monoio::spawn(async move {
                                     let srv = TcpListener::bind(addr).unwrap();
                                     let (server_stream, _) = srv.accept().await.unwrap();
-                                    let fd = server_stream.as_raw_fd();
-
-                                    // We leak it so no drop are happening it might not be a really
-                                    // good idea btw
-                                    // Maybe we need something to "drop" without running the
-                                    // OP::close
-                                    std::mem::forget(server_stream);
+                                    let fd = server_stream.into_raw_fd();
 
                                     // We send the fd to the other thread on the other CPU.
                                     shard.send_to(fd, 1).unwrap();
@@ -166,9 +162,13 @@ fn load_balance_tcp() {
                                 let mut receiver = receiver.unwrap();
                                 let fd = receiver.next().await.unwrap();
 
-                                let mut tcp = unsafe { std::net::TcpStream::from_raw_fd(fd) };
-                                let b = tcp.write(b"hi mom").unwrap();
-                                tcp.flush().unwrap();
+                                let mut tcp = TcpStream::from_std(unsafe {
+                                    std::net::TcpStream::from_raw_fd(fd)
+                                })
+                                .unwrap();
+
+                                tcp.write(b"hello mom").await.0.unwrap();
+                                tcp.flush().await.unwrap();
                             }
                         });
                         handle.await
