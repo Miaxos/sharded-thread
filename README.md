@@ -9,10 +9,24 @@
 
 ## Introduction
 
-Sometimes, you want to be able to shard data between thread, because only this
-thread is able to handle the data or you want to load balance between thread.
+This library is mainly made for `io-uring` and monoio. There are no dependency
+on the runtime, so you should be able to use it with other runtime and also
+without `io-uring`.
 
-This is an experiment to try to tackle this issue: https://github.com/bytedance/monoio/issues/213.
+The purpose of this library is to have a performant way to send data between
+thread when threads are following a `thread per core` architecture.
+
+## Example
+
+Originally, the library was made when you had multiple thread listening to the
+same `TcpStream` and depending on what is sent through the `TcpStream` you might
+want to change the thread handling the stream.
+
+<p align="center">
+    <img src="./.github/ressources/sharded-thread.drawio.svg" width="60%" />
+</p>
+
+You can check the code for this example here: WIP
 
 ## References
 
