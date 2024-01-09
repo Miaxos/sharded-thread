@@ -13,6 +13,7 @@ documentation = "https://docs.rs/sharded-thread/latest/sharded-thread/"
 futures = "0.3"
 non_blocking_mutex = "3"
 sharded_queue = "2.0"
+thiserror = "1"
 
 [dev-dependencies]
 cfg-if = "1"

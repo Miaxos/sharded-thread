@@ -50,10 +50,10 @@ pub struct Sender<'a, T> {
 impl<'a, T> Sender<'a, T> {
     /// Attempts to send a value to the queue
     pub fn send(&self, item: T) {
-        self.queue.queue.push_back(item);
         self.queue
             .task_queue
-            .fetch_add(1, std::sync::atomic::Ordering::Acquire);
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.queue.queue.push_back(item);
         self.queue.waker.wake();
     }
 }
@@ -75,12 +75,12 @@ impl<'a, T> Stream for Receiver<'a, T> {
         let old = self
             .queue
             .task_queue
-            .load(std::sync::atomic::Ordering::Acquire);
+            .load(std::sync::atomic::Ordering::Relaxed);
 
         if old > 0 {
             self.queue
                 .task_queue
-                .fetch_sub(1, std::sync::atomic::Ordering::Release);
+                .fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
             let item = self.queue.queue.pop_front_or_spin_wait_item();
             Poll::Ready(Some(item))
         } else {
@@ -92,11 +92,13 @@ impl<'a, T> Stream for Receiver<'a, T> {
 #[cfg(test)]
 mod tests {
 
+    use std::time::Duration;
+
     use super::SharedQueueChannels;
     use super::SharedQueueThreaded;
     use futures::StreamExt;
 
-    #[monoio::test_all]
+    #[monoio::test_all(timer_enabled = true)]
     async fn ensure_send_receive() {
         let queue = SharedQueueThreaded::<u8>::new(2).unwrap();
 
@@ -107,14 +109,12 @@ mod tests {
 
         let val1 = rx.next().await.unwrap();
         let val2 = rx.next().await.unwrap();
-
-        // We don't know if there is another one
-        // let val3 = rx.next().await;
+        let val3 = monoio::time::timeout(Duration::from_millis(10), rx.next()).await;
 
         let mut merged = [val1, val2];
         merged.sort();
         let merged: Vec<u8> = merged.into_iter().collect();
         assert_eq!(merged, [1, 2]);
-        // assert_eq!(val3, None);
+        assert!(val3.is_err());
     }
 }

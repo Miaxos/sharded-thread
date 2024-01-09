@@ -16,7 +16,7 @@ pub struct MeshBuilder<T> {
     #[allow(dead_code)]
     nr_peers: usize,
     pub channels: Vec<SharedQueueThreaded<T>>,
-    pub position: Arc<AtomicUsize>,
+    pub shared_joined: Arc<AtomicUsize>,
 }
 
 impl<'a, T> MeshBuilder<T> {
@@ -33,30 +33,31 @@ impl<'a, T> MeshBuilder<T> {
         Ok(Self {
             nr_peers,
             channels,
-            position: Arc::new(AtomicUsize::new(0)),
+            shared_joined: Arc::new(AtomicUsize::new(0)),
         })
     }
 
     /// Join the mesh means you can talk to other peer and peer can talk to you.
-    pub fn join(&'a self) -> std::io::Result<Shard<'a, T>> {
-        let pos = self
-            .position
+    ///
+    /// You must assign yourself an id so other Shard will be able to talk with you using this ID
+    pub fn join_with(&'a self, peer: usize) -> std::io::Result<Shard<'a, T>> {
+        self.shared_joined
             .fetch_add(1, std::sync::atomic::Ordering::Acquire);
 
-        assert!(pos < self.channels.len());
+        assert!(peer < self.channels.len());
 
         let senders = self
             .channels
             .iter()
             .map(SharedQueueThreaded::sender)
             .collect();
-        let (_, receiver) = self.channels[pos].unbounded();
+        let (_, receiver) = self.channels[peer].unbounded();
 
         Ok(Shard {
             receiver: Cell::new(Some(receiver)),
             senders,
-            max_shard: self.position.clone(),
-            shard_id: pos,
+            max_shard: self.shared_joined.clone(),
+            shard_id: peer,
         })
     }
 }
