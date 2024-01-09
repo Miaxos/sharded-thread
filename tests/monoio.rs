@@ -97,7 +97,6 @@ fn load_balance_tcp() {
         let mut handles = Vec::new();
         for cpu in 0..cpus {
             let handle = scope.spawn(move || {
-                dbg!(cpu);
                 monoio::utils::bind_to_cpu_set(Some(cpu)).unwrap();
                 let mut rt = monoio::RuntimeBuilder::<Driver>::new()
                     .with_entries(1024)
@@ -138,7 +137,6 @@ fn load_balance_tcp() {
                                 let handle = monoio::spawn(async move {
                                     let srv = TcpListener::bind(addr).unwrap();
                                     let (server_stream, _) = srv.accept().await.unwrap();
-                                    dbg!("accepted");
                                     let fd = server_stream.as_raw_fd();
 
                                     // We leak it so no drop are happening it might not be a really
@@ -158,13 +156,10 @@ fn load_balance_tcp() {
                                 let receiver = shard.receiver();
                                 let mut receiver = receiver.unwrap();
                                 let fd = receiver.next().await.unwrap();
-                                dbg!(fd);
 
                                 // monoio::time::sleep(Duration::from_millis(100)).await;
                                 let mut tcp = unsafe { std::net::TcpStream::from_raw_fd(fd) };
-                                dbg!(&tcp);
                                 let b = tcp.write(b"hi mom").unwrap();
-                                dbg!(b);
                                 tcp.flush().unwrap();
                             }
                         });
@@ -179,10 +174,6 @@ fn load_balance_tcp() {
         for i in handles {
             let r = i.join();
             assert!(r.is_ok());
-
-            if r.is_err() {
-                panic!("");
-            }
         }
     });
 }
