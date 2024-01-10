@@ -12,20 +12,21 @@ pub enum SenderError {
 }
 
 /// The structure which is used to communicate with other peers from the Mesh.
-pub struct Shard<'a, T> {
-    pub(crate) receiver: Cell<Option<Receiver<'a, T>>>,
-    pub(crate) senders: Vec<Sender<'a, T>>,
+pub struct Shard<T> {
+    pub(crate) receiver: Cell<Option<Receiver<T>>>,
+    pub(crate) senders: Vec<Sender<T>>,
     /// Number of shard available
     pub(crate) max_shard: Arc<AtomicUsize>,
     /// Actual shard id
+    #[allow(dead_code)]
     pub(crate) shard_id: usize,
 }
 
-impl<T> Shard<'_, T> {
+impl<T> Shard<T> {
     /// Take the receiver of this shard.
     /// Shard are implemented using `mpsc` channels, so only one Receiver can receiving values from
     /// the other shards.
-    pub fn receiver(&self) -> Option<Receiver<'_, T>> {
+    pub fn receiver(&self) -> Option<Receiver<T>> {
         self.receiver.take()
     }
 

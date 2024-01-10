@@ -15,11 +15,11 @@ use crate::{
 pub struct MeshBuilder<T> {
     #[allow(dead_code)]
     nr_peers: usize,
-    pub channels: Vec<SharedQueueThreaded<T>>,
+    pub channels: Vec<Arc<SharedQueueThreaded<T>>>,
     pub shared_joined: Arc<AtomicUsize>,
 }
 
-impl<'a, T> MeshBuilder<T> {
+impl<T> MeshBuilder<T> {
     /// Create a new mesh
     pub fn new() -> std::io::Result<Self> {
         let nr_peers = std::thread::available_parallelism()?.get();
@@ -40,7 +40,7 @@ impl<'a, T> MeshBuilder<T> {
     /// Join the mesh means you can talk to other peer and peer can talk to you.
     ///
     /// You must assign yourself an id so other Shard will be able to talk with you using this ID
-    pub fn join_with(&'a self, peer: usize) -> std::io::Result<Shard<'a, T>> {
+    pub fn join_with(&self, peer: usize) -> std::io::Result<Shard<T>> {
         self.shared_joined
             .fetch_add(1, std::sync::atomic::Ordering::Acquire);
 
@@ -49,7 +49,7 @@ impl<'a, T> MeshBuilder<T> {
         let senders = self
             .channels
             .iter()
-            .map(SharedQueueThreaded::sender)
+            .map(SharedQueueChannels::sender)
             .collect();
         let (_, receiver) = self.channels[peer].unbounded();
 

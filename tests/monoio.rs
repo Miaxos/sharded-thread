@@ -1,15 +1,10 @@
-use std::io::{BufWriter, Read, Write};
-use std::os::fd::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
+use std::os::fd::{FromRawFd, IntoRawFd, RawFd};
 use std::thread::scope;
 use std::time::Duration;
 
 use futures::StreamExt;
 
-use monoio::buf::VecBuf;
-use monoio::io::as_fd::AsReadFd;
-use monoio::io::{
-    AsyncReadRent, AsyncReadRentExt, AsyncWriteRent, OwnedReadHalf, OwnedWriteHalf, Splitable,
-};
+use monoio::io::{AsyncReadRentExt, AsyncWriteRent};
 use monoio::net::{TcpListener, TcpStream};
 use sharded_thread::queue::SharedQueueChannels;
 use sharded_thread::{mesh::MeshBuilder, shard::Shard};
@@ -41,16 +36,7 @@ fn ensure_messages_are_sent_through_the_shard() {
                     .build()
                     .expect("Cannot build runtime");
 
-                // TODO: maybe change it to a Arc instead and we'll have to wait for scoped
-                // lifetime for async
-                //
-                // It's not unsafe because we know Shard is going to live more than the thread as
-                // everything is scoped.
-                let shard: Shard<'static, Msg> = unsafe {
-                    std::mem::transmute::<Shard<'_, Msg>, Shard<'static, Msg>>(
-                        mesh.join_with(cpu).unwrap(),
-                    )
-                };
+                let shard: Shard<Msg> = mesh.join_with(cpu).unwrap();
 
                 rt.block_on(async move {
                     let handle = monoio::spawn(async move {
@@ -110,13 +96,7 @@ fn load_balance_tcp() {
                     .build()
                     .expect("Cannot build runtime");
 
-                // TODO: maybe change it to a Arc instead and we'll have to wait for scoped
-                // lifetime for async
-                let shard: Shard<'static, Msg> = unsafe {
-                    std::mem::transmute::<Shard<'_, Msg>, Shard<'static, Msg>>(
-                        mesh.join_with(cpu).unwrap(),
-                    )
-                };
+                let shard: Shard<Msg> = mesh.join_with(cpu).unwrap();
 
                 if cpu == 2 {
                     // - One tcp client which will connect with the tcp server

@@ -2,6 +2,7 @@ use futures::task::AtomicWaker;
 use futures::Stream;
 use sharded_queue::ShardedQueue;
 use std::sync::atomic::AtomicUsize;
+use std::sync::Arc;
 
 use std::task::Poll;
 
@@ -13,41 +14,45 @@ pub struct SharedQueueThreaded<T> {
 }
 
 impl<T> SharedQueueThreaded<T> {
-    pub fn new(max_concurrent_thread_count: usize) -> std::io::Result<Self> {
+    pub fn new(max_concurrent_thread_count: usize) -> std::io::Result<Arc<Self>> {
         let waker = AtomicWaker::new();
-        Ok(Self {
+        Ok(Arc::new(Self {
             queue: ShardedQueue::new(max_concurrent_thread_count),
             task_queue: AtomicUsize::new(0),
             waker,
-        })
+        }))
     }
 }
 
-pub trait SharedQueueChannels<'a, T> {
-    fn unbounded(&'a self) -> (Sender<'a, T>, Receiver<'a, T>);
+pub trait SharedQueueChannels<T> {
+    fn unbounded(&self) -> (Sender<T>, Receiver<T>);
 
-    fn sender(&'a self) -> Sender<'a, T>;
+    fn sender(&self) -> Sender<T>;
 }
 
-impl<'a, T> SharedQueueChannels<'a, T> for SharedQueueThreaded<T> {
-    fn unbounded(&'a self) -> (Sender<'a, T>, Receiver<'a, T>) {
+impl<T> SharedQueueChannels<T> for Arc<SharedQueueThreaded<T>> {
+    fn unbounded(&self) -> (Sender<T>, Receiver<T>) {
         let tx = self.sender();
 
-        let rx = Receiver { queue: self };
+        let rx = Receiver {
+            queue: Arc::clone(self),
+        };
 
         (tx, rx)
     }
 
-    fn sender(&'a self) -> Sender<'a, T> {
-        Sender { queue: self }
+    fn sender(&self) -> Sender<T> {
+        Sender {
+            queue: Arc::clone(self),
+        }
     }
 }
 
-pub struct Sender<'a, T> {
-    queue: &'a SharedQueueThreaded<T>,
+pub struct Sender<T> {
+    queue: Arc<SharedQueueThreaded<T>>,
 }
 
-impl<'a, T> Sender<'a, T> {
+impl<T> Sender<T> {
     /// Attempts to send a value to the queue
     pub fn send(&self, item: T) {
         self.queue
@@ -59,11 +64,11 @@ impl<'a, T> Sender<'a, T> {
 }
 
 #[derive(Clone)]
-pub struct Receiver<'a, T> {
-    queue: &'a SharedQueueThreaded<T>,
+pub struct Receiver<T> {
+    queue: Arc<SharedQueueThreaded<T>>,
 }
 
-impl<'a, T> Stream for Receiver<'a, T> {
+impl<T> Stream for Receiver<T> {
     type Item = T;
 
     fn poll_next(
