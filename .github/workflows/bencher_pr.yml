@@ -17,7 +17,7 @@ jobs:
       - name: Track Benchmarks with Bencher
         run: |
           bencher run \
-          -iter 16 \
+          --iter 16 \
           --if-branch "$GITHUB_REF_NAME" \
           --else-if-branch "$GITHUB_BASE_REF" \
           --else-if-branch main \
