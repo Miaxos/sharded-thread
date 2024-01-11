@@ -50,7 +50,7 @@ impl<T> Shard<T> {
     }
 
     /// Send a value to a shard
-    pub fn send_to_unchecked(&self, val: T, shard: usize) -> () {
+    pub fn send_to_unchecked(&self, val: T, shard: usize) {
         let sender = self
             .senders
             .get(shard)
