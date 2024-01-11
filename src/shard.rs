@@ -1,7 +1,6 @@
-use std::{
-    cell::Cell,
-    sync::{atomic::AtomicUsize, Arc},
-};
+use std::cell::Cell;
+use std::sync::atomic::AtomicUsize;
+use std::sync::Arc;
 
 use crate::queue::{Receiver, Sender};
 
@@ -24,8 +23,8 @@ pub struct Shard<T> {
 
 impl<T> Shard<T> {
     /// Take the receiver of this shard.
-    /// Shard are implemented using `mpsc` channels, so only one Receiver can receiving values from
-    /// the other shards.
+    /// Shard are implemented using `mpsc` channels, so only one Receiver can
+    /// receiving values from the other shards.
     pub fn receiver(&self) -> Option<Receiver<T>> {
         self.receiver.take()
     }
@@ -34,7 +33,8 @@ impl<T> Shard<T> {
     ///
     /// Fail if this Shard did not join yet.
     pub fn send_to(&self, val: T, shard: usize) -> Result<(), SenderError> {
-        let max_shard = self.max_shard.load(std::sync::atomic::Ordering::Acquire);
+        let max_shard =
+            self.max_shard.load(std::sync::atomic::Ordering::Acquire);
 
         if shard >= max_shard {
             return Err(SenderError::WrongShard);

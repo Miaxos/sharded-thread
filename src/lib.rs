@@ -3,8 +3,8 @@
 
 /// A mesh to connect multiple executor together.
 ///
-/// A mesh is composed of multiple peers and a way to communicate between each of these peers.
-/// Everyone is the mesh can communicate with the others peer.
+/// A mesh is composed of multiple peers and a way to communicate between each
+/// of these peers. Everyone is the mesh can communicate with the others peer.
 ///
 /// # Examples
 ///

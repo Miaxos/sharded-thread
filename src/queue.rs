@@ -1,10 +1,10 @@
+use std::sync::atomic::{fence, AtomicUsize};
+use std::sync::Arc;
+use std::task::Poll;
+
 use futures::task::AtomicWaker;
 use futures::Stream;
 use sharded_queue::ShardedQueue;
-use std::sync::atomic::{fence, AtomicUsize};
-use std::sync::Arc;
-
-use std::task::Poll;
 
 /// A queue that should be available on each thread.
 pub struct SharedQueueThreaded<T> {
@@ -14,9 +14,12 @@ pub struct SharedQueueThreaded<T> {
 }
 
 impl<T> SharedQueueThreaded<T> {
-    /// Create a new `SharedQueueThreaded` by specifing the number of thread how can physically
-    /// access the queue = the number of CPU core available for the application.
-    pub fn new(max_concurrent_thread_count: usize) -> std::io::Result<Arc<Self>> {
+    /// Create a new `SharedQueueThreaded` by specifing the number of thread how
+    /// can physically access the queue = the number of CPU core available
+    /// for the application.
+    pub fn new(
+        max_concurrent_thread_count: usize,
+    ) -> std::io::Result<Arc<Self>> {
         let waker = AtomicWaker::new();
         Ok(Arc::new(Self {
             queue: ShardedQueue::new(max_concurrent_thread_count),
@@ -102,9 +105,9 @@ mod tests {
 
     use std::time::Duration;
 
-    use super::SharedQueueChannels;
-    use super::SharedQueueThreaded;
     use futures::StreamExt;
+
+    use super::{SharedQueueChannels, SharedQueueThreaded};
 
     #[monoio::test_all(timer_enabled = true)]
     async fn ensure_send_receive() {
@@ -117,7 +120,8 @@ mod tests {
 
         let val1 = rx.next().await.unwrap();
         let val2 = rx.next().await.unwrap();
-        let val3 = monoio::time::timeout(Duration::from_millis(10), rx.next()).await;
+        let val3 =
+            monoio::time::timeout(Duration::from_millis(10), rx.next()).await;
 
         let mut merged = [val1, val2];
         merged.sort();

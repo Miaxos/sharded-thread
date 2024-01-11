@@ -10,9 +10,11 @@ cfg_if::cfg_if! {
 
 #[test]
 fn contention() {
-    use futures::StreamExt;
-    use sharded_thread::{mesh::MeshBuilder, shard::Shard};
     use std::sync::Arc;
+
+    use futures::StreamExt;
+    use sharded_thread::mesh::MeshBuilder;
+    use sharded_thread::shard::Shard;
 
     // Message to send
     type Msg = usize;
@@ -42,13 +44,16 @@ fn contention() {
                     let send_to = (peer + 1) % cpus;
                     shard.send_to_unchecked(peer, send_to);
 
-                    let result = monoio::time::timeout(Duration::from_millis(20), async move {
-                        while let Some(val) = receiver.next().await {
-                            println!("Received {val} on CPU {peer}");
-                            // In this example we break at the begining
-                            return ();
-                        }
-                    })
+                    let result = monoio::time::timeout(
+                        Duration::from_millis(20),
+                        async move {
+                            while let Some(val) = receiver.next().await {
+                                println!("Received {val} on CPU {peer}");
+                                // In this example we break at the begining
+                                return ();
+                            }
+                        },
+                    )
                     .await;
 
                     assert!(result.is_ok());

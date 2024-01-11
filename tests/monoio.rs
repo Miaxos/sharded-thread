@@ -4,10 +4,10 @@ use std::thread::scope;
 use std::time::Duration;
 
 use futures::StreamExt;
-
 use monoio::io::{AsyncReadRentExt, AsyncWriteRent};
 use monoio::net::{TcpListener, TcpStream};
-use sharded_thread::{mesh::MeshBuilder, shard::Shard};
+use sharded_thread::mesh::MeshBuilder;
+use sharded_thread::shard::Shard;
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
@@ -81,9 +81,11 @@ fn load_balance_tcp() {
 
         let mut handles = Vec::new();
         // We will run monoio on 3 separate cpu & 3 separate thread.
-        // - One Tcp server which will accept the connection and send the fd to the proper thread
+        // - One Tcp server which will accept the connection and send the fd to
+        //   the proper thread
         // - One tcp client which will connect with the tcp server
-        // - One which will receive the fd and respond to the client and close the connection.
+        // - One which will receive the fd and respond to the client and close
+        //   the connection.
         for cpu in 0..cpus {
             let handle = scope.spawn(move || {
                 monoio::utils::bind_to_cpu_set(Some(cpu)).unwrap();
@@ -98,18 +100,28 @@ fn load_balance_tcp() {
                 if cpu == 2 {
                     // - One tcp client which will connect with the tcp server
                     rt.block_on(async move {
-                        let result = monoio::time::timeout(Duration::from_secs(3), async move {
-                            loop {
-                                if let Ok(mut client_stream) = TcpStream::connect(addr).await {
-                                    // client_stream.set_nodelay(true).unwrap();
-                                    let buf = Box::new([0u8; 9]);
-                                    let (_, buf) = client_stream.read_exact(buf).await;
+                        let result = monoio::time::timeout(
+                            Duration::from_secs(3),
+                            async move {
+                                loop {
+                                    if let Ok(mut client_stream) =
+                                        TcpStream::connect(addr).await
+                                    {
+                                        // client_stream.set_nodelay(true).
+                                        // unwrap();
+                                        let buf = Box::new([0u8; 9]);
+                                        let (_, buf) =
+                                            client_stream.read_exact(buf).await;
 
-                                    assert_eq!(buf.as_slice(), b"hello mom");
-                                    break;
+                                        assert_eq!(
+                                            buf.as_slice(),
+                                            b"hello mom"
+                                        );
+                                        break;
+                                    }
                                 }
-                            }
-                        })
+                            },
+                        )
                         .await;
 
                         assert!(result.is_ok());
@@ -118,21 +130,29 @@ fn load_balance_tcp() {
                     rt.block_on(async move {
                         let handle = monoio::spawn(async move {
                             if cpu == 0 {
-                                // - One Tcp server which will accept the connection and send the fd to the proper thread
+                                // - One Tcp server which will accept the
+                                //   connection and send the fd to the proper
+                                //   thread
                                 let handle = monoio::spawn(async move {
                                     let srv = TcpListener::bind(addr).unwrap();
-                                    let (server_stream, _) = srv.accept().await.unwrap();
+                                    let (server_stream, _) =
+                                        srv.accept().await.unwrap();
                                     let fd = server_stream.into_raw_fd();
 
-                                    // We send the fd to the other thread on the other CPU.
+                                    // We send the fd to the other thread on the
+                                    // other CPU.
                                     shard.send_to(fd, 1).unwrap();
                                 });
 
-                                monoio::time::timeout(Duration::from_millis(3000), handle)
-                                    .await
-                                    .unwrap();
+                                monoio::time::timeout(
+                                    Duration::from_millis(3000),
+                                    handle,
+                                )
+                                .await
+                                .unwrap();
                             } else {
-                                // - One which will receive the fd and respond to the client and close the connection.
+                                // - One which will receive the fd and respond
+                                //   to the client and close the connection.
                                 // cpu = 1
                                 //
                                 let receiver = shard.receiver();

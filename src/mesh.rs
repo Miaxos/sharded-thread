@@ -1,17 +1,15 @@
-//! The idea of the mesh is to be able to connected threads together through channels.
+//! The idea of the mesh is to be able to connected threads together through
+//! channels.
 
-use std::{
-    cell::Cell,
-    sync::{atomic::AtomicUsize, Arc},
-};
+use std::cell::Cell;
+use std::sync::atomic::AtomicUsize;
+use std::sync::Arc;
 
-use crate::{
-    queue::{SharedQueueChannels, SharedQueueThreaded},
-    shard::{SenderError, Shard},
-};
+use crate::queue::{SharedQueueChannels, SharedQueueThreaded};
+use crate::shard::{SenderError, Shard};
 
-/// A Mesh is a structure which can be shared in every thread by reference to allow threads to join
-/// the Mesh and talk to each others.
+/// A Mesh is a structure which can be shared in every thread by reference to
+/// allow threads to join the Mesh and talk to each others.
 pub struct MeshBuilder<T> {
     #[allow(dead_code)]
     nr_peers: usize,
@@ -47,8 +45,8 @@ impl<T> MeshBuilder<T> {
         })
     }
 
-    /// Try to send an item directly to a shard, you must know the id of the shard you want to send
-    /// the item to.
+    /// Try to send an item directly to a shard, you must know the id of the
+    /// shard you want to send the item to.
     ///
     /// Fail if the shard is not registered.
     #[doc(hidden)]
@@ -63,7 +61,8 @@ impl<T> MeshBuilder<T> {
 
     /// Join the mesh means you can talk to other peer and peer can talk to you.
     ///
-    /// You must assign yourself an id so other Shard will be able to talk with you using this ID
+    /// You must assign yourself an id so other Shard will be able to talk with
+    /// you using this ID
     pub fn join_with(&self, peer: usize) -> std::io::Result<Shard<T>> {
         self.shared_joined
             .fetch_add(1, std::sync::atomic::Ordering::Acquire);
