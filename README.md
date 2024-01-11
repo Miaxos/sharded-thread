@@ -23,6 +23,8 @@ without `io-uring`.
 The purpose of this library is to have a performant way to send data between
 thread when threads are following a `thread per core` architecture.
 
+Thanks to [Glommio](https://github.com/DataDog/glommio/) for the inspiration
+
 ## Example
 
 Originally, the library was made when you had multiple thread listening to the
@@ -38,12 +40,12 @@ like false sharing[^2].
 
 [^2]: An excellent article explaining it: [alic.dev](https://alic.dev/blog/false-sharing).
 
-You can check the code for this example here: WIP
+You can check some examples in the tests.
 
 ## References
 
-- https://github.com/DataDog/glommio/blob/master/examples/sharding.rs
-- https://github.com/bytedance/monoio/issues/213
+- [Glommio example on their sharding](https://github.com/DataDog/glommio/blob/master/examples/sharding.rs)
+- [The original monoio issue](https://github.com/bytedance/monoio/issues/213)
 
 ## License
 
