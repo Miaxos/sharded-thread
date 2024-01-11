@@ -7,6 +7,7 @@ license = "MIT OR Apache-2.0"
 description = "Expirement for now"
 repository = "https://github.com/Miaxos/sharded-thread"
 documentation = "https://docs.rs/sharded-thread/latest/sharded-thread/"
+keywords = ["glommio", "monoio", "io-uring", "shard", "thread"]
 
 
 [dependencies]
