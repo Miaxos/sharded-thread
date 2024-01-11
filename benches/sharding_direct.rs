@@ -70,7 +70,6 @@ fn execute_round<T: Send + 'static>(
     mesh: Arc<MeshBuilder<T>>,
     count_max: usize,
 ) -> JoinHandle<()> {
-    
     std::thread::spawn(move || {
         // We lock the thread for the core
         monoio::utils::bind_to_cpu_set(Some(2)).unwrap();
