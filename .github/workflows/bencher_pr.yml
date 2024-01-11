@@ -16,14 +16,14 @@ jobs:
       - uses: bencherdev/bencher@main
       - name: Track Benchmarks with Bencher
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           bencher run \
           --iter 1 \
           --if-branch "$GITHUB_REF_NAME" \
           --else-if-branch "$GITHUB_BASE_REF" \
           --else-if-branch main \
-          --github-actions "${{ env.GITHUB_TOKEN }}" \
+          --github-actions "$GITHUB_TOKEN" \
           --token "${{ secrets.BENCHER_API_TOKEN }}" \
           --err \
           "cargo bench"
