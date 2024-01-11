@@ -17,11 +17,11 @@ jobs:
       - name: Track Benchmarks with Bencher
         run: |
           bencher run \
-          --iter 16 \
+          --iter 1 \
           --if-branch "$GITHUB_REF_NAME" \
           --else-if-branch "$GITHUB_BASE_REF" \
           --else-if-branch main \
-          --github-actions "${{ secrets.token }}" \
+          --github-actions "${{ github.token }}" \
           --token "${{ secrets.BENCHER_API_TOKEN }}" \
           --err \
           "cargo bench"
