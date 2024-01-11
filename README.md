@@ -39,6 +39,9 @@ You can check some examples in the tests.
 
 ## Benchmarks
 
+Those benchmarks are only indicative, they are running in GA. You should run
+your own on the targeted hardware.
+
 <p align="center">
 <a href="https://bencher.dev/perf/sharded-thread?key=true&reports_per_page=4&branches_per_page=8&testbeds_per_page=8&benchmarks_per_page=8&reports_page=1&branches_page=1&testbeds_page=1&benchmarks_page=1"><img src="https://api.bencher.dev/v0/projects/sharded-thread/perf/img?branches=abb3e39f-486d-45af-924f-3614316b6781&testbeds=63179e4d-88f0-4247-85f4-ad6952282d58&benchmarks=2b3141e3-f3f6-42b7-8209-43381c453c67&measures=0e7c206f-e0e3-4672-be1a-b3820dc2789a&start_time=1702401209000&end_time=1704993221000&title=Benches" title="Benches" alt="Benches for sharded-thread - Bencher" width="60%" /></a>
 </p>
