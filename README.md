@@ -23,7 +23,7 @@ without `io-uring`.
 The purpose of this library is to have a performant way to send data between
 thread when threads are following a `thread per core` architecture.
 
-Thanks to [Glommio](https://github.com/DataDog/glommio/) for the inspiration
+Thanks to [Glommio](https://github.com/DataDog/glommio/) for the inspiration.
 
 ## Example
 
@@ -46,6 +46,7 @@ You can check some examples in the tests.
 
 - [Glommio example on their sharding](https://github.com/DataDog/glommio/blob/master/examples/sharding.rs)
 - [The original monoio issue](https://github.com/bytedance/monoio/issues/213)
+- [Sharded Queue - the fastest concurrent collection](https://github.com/ivanivanyuk1993/utility.sharded_queue)
 
 ## License
 
