@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use std::thread::JoinHandle;
+use std::u128;
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use futures::StreamExt;
@@ -19,16 +20,13 @@ cfg_if::cfg_if! {
 // 1-2: Passthrough
 //
 // We send a value from 3 -> 1, then 1 -> 2, then 2 -> 3.
-
-fn start_threads() -> (Vec<JoinHandle<()>>, Arc<MeshBuilder<usize>>) {
+fn start_threads<Msg: Send + 'static>(
+) -> (Vec<JoinHandle<()>>, Arc<MeshBuilder<Msg>>) {
     use std::sync::Arc;
 
     use futures::StreamExt;
     use sharded_thread::mesh::MeshBuilder;
     use sharded_thread::shard::Shard;
-
-    // Message to send
-    type Msg = usize;
 
     let cpus = 3;
     let mesh = Arc::new(MeshBuilder::<Msg>::new(cpus).unwrap());
@@ -68,8 +66,8 @@ fn start_threads() -> (Vec<JoinHandle<()>>, Arc<MeshBuilder<usize>>) {
     (handles, mesh)
 }
 
-fn execute_round(
-    mesh: Arc<MeshBuilder<usize>>,
+fn execute_round<T: Send + 'static>(
+    mesh: Arc<MeshBuilder<T>>,
     count_max: usize,
 ) -> JoinHandle<()> {
     let handle = std::thread::spawn(move || {
@@ -104,7 +102,7 @@ fn execute_round(
 }
 
 fn bench_round(c: &mut Criterion) {
-    let (_, mesh) = start_threads();
+    let (_, mesh) = start_threads::<usize>();
 
     c.bench_function("send_a_value_between_two_cpu_1", |b| {
         b.iter_batched(
@@ -173,9 +171,106 @@ fn bench_round(c: &mut Criterion) {
     });
 }
 
+struct WrapperSendStruct {
+    val: usize,
+    thing: String,
+    foo0: u128,
+    foo1: u128,
+    foo2: u128,
+    thing2: String,
+}
+
+impl Default for WrapperSendStruct {
+    fn default() -> Self {
+        Self {
+            val: 12345,
+            thing: "Something awesome is here, do you want to know about \
+                    this? no? Are you really sure about it?"
+                .to_string(),
+            thing2: "SOMETHING AWESOME IS HERE, DO YOU WANT TO KNOW ABOUT \
+                     THIS? NO? ARE YOU REALLY SURE ABOUT IT?"
+                .to_string(),
+            foo0: 123456786543245643,
+            foo1: 523456786543245643,
+            foo2: 323356786543245643,
+        }
+    }
+}
+
+// TODO: MAcro to generate benches
+fn bench_round_struct(c: &mut Criterion) {
+    let (_, mesh) = start_threads::<WrapperSendStruct>();
+
+    c.bench_function("struct_send_a_value_between_two_cpu_1", |b| {
+        b.iter_batched(
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 0)),
+            |(mesh, handle)| {
+                mesh.send_to(1, WrapperSendStruct::default()).unwrap();
+                handle.join().unwrap();
+            },
+            criterion::BatchSize::PerIteration,
+        )
+    });
+
+    c.bench_function("struct_rotate_a_usize_between_3_cpu_1", |b| {
+        b.iter_batched(
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 1)),
+            |(mesh, handle)| {
+                mesh.send_to(1, WrapperSendStruct::default()).unwrap();
+                handle.join().unwrap();
+            },
+            criterion::BatchSize::PerIteration,
+        )
+    });
+
+    c.bench_function("struct_rotate_a_usize_between_3_cpu_10", |b| {
+        b.iter_batched(
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 10)),
+            |(mesh, handle)| {
+                mesh.send_to(1, WrapperSendStruct::default()).unwrap();
+                handle.join().unwrap();
+            },
+            criterion::BatchSize::PerIteration,
+        )
+    });
+
+    c.bench_function("struct_rotate_a_usize_between_3_cpu_100", |b| {
+        b.iter_batched(
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 100)),
+            |(mesh, handle)| {
+                mesh.send_to(1, WrapperSendStruct::default()).unwrap();
+                handle.join().unwrap();
+            },
+            criterion::BatchSize::PerIteration,
+        )
+    });
+
+    c.bench_function("struct_rotate_a_usize_between_3_cpu_1000", |b| {
+        b.iter_batched(
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 1_000)),
+            |(mesh, handle)| {
+                mesh.send_to(1, WrapperSendStruct::default()).unwrap();
+                handle.join().unwrap();
+            },
+            criterion::BatchSize::PerIteration,
+        )
+    });
+
+    c.bench_function("struct_rotate_a_usize_between_3_cpu_10_000", |b| {
+        b.iter_batched(
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 1_000)),
+            |(mesh, handle)| {
+                mesh.send_to(1, WrapperSendStruct::default()).unwrap();
+                handle.join().unwrap();
+            },
+            criterion::BatchSize::PerIteration,
+        )
+    });
+}
+
 criterion_group! {
     name = benches;
     config = Criterion::default();
-    targets = bench_round
+    targets = bench_round, bench_round_struct
 }
 criterion_main!(benches);
