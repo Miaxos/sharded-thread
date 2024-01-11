@@ -13,8 +13,6 @@ cfg_if::cfg_if! {
     }
 }
 
-const COUNT: i32 = 1_000;
-
 // For this test we need 3 core:
 //
 // 3: Bencher
@@ -70,7 +68,10 @@ fn start_threads() -> (Vec<JoinHandle<()>>, Arc<MeshBuilder<usize>>) {
     (handles, mesh)
 }
 
-fn execute_round(mesh: Arc<MeshBuilder<usize>>) -> () {
+fn execute_round(
+    mesh: Arc<MeshBuilder<usize>>,
+    count_max: usize,
+) -> JoinHandle<()> {
     let handle = std::thread::spawn(move || {
         // We lock the thread for the core
         monoio::utils::bind_to_cpu_set(Some(2)).unwrap();
@@ -81,7 +82,7 @@ fn execute_round(mesh: Arc<MeshBuilder<usize>>) -> () {
             .expect("Cannot build runtime");
 
         let shard = mesh.join_with(2).unwrap();
-        shard.send_to_unchecked(12345, 2);
+        // shard.send_to_unchecked(12345, 2);
 
         rt.block_on(async move {
             let handle = monoio::spawn(async move {
@@ -89,7 +90,7 @@ fn execute_round(mesh: Arc<MeshBuilder<usize>>) -> () {
 
                 let mut count = 0;
                 while let Some(val) = receiver.next().await {
-                    if count > COUNT {
+                    if count > count_max {
                         return;
                     }
                     shard.send_to_unchecked(val, 0);
@@ -99,16 +100,74 @@ fn execute_round(mesh: Arc<MeshBuilder<usize>>) -> () {
             handle.await
         })
     });
-    handle.join().unwrap()
+    handle
 }
 
 fn bench_round(c: &mut Criterion) {
     let (_, mesh) = start_threads();
 
-    c.bench_function("rotate_a_usize_between_3_cpu", |b| {
+    c.bench_function("send_a_value_between_two_cpu_1", |b| {
         b.iter_batched(
-            || Arc::clone(&mesh),
-            |mesh| execute_round(black_box(mesh)),
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 0)),
+            |(mesh, handle)| {
+                mesh.send_to(1, 12345).unwrap();
+                handle.join().unwrap();
+            },
+            criterion::BatchSize::PerIteration,
+        )
+    });
+
+    c.bench_function("rotate_a_usize_between_3_cpu_1", |b| {
+        b.iter_batched(
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 1)),
+            |(mesh, handle)| {
+                mesh.send_to(2, 12345).unwrap();
+                handle.join().unwrap();
+            },
+            criterion::BatchSize::PerIteration,
+        )
+    });
+
+    c.bench_function("rotate_a_usize_between_3_cpu_10", |b| {
+        b.iter_batched(
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 10)),
+            |(mesh, handle)| {
+                mesh.send_to(2, 12345).unwrap();
+                handle.join().unwrap();
+            },
+            criterion::BatchSize::PerIteration,
+        )
+    });
+
+    c.bench_function("rotate_a_usize_between_3_cpu_100", |b| {
+        b.iter_batched(
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 100)),
+            |(mesh, handle)| {
+                mesh.send_to(2, 12345).unwrap();
+                handle.join().unwrap();
+            },
+            criterion::BatchSize::PerIteration,
+        )
+    });
+
+    c.bench_function("rotate_a_usize_between_3_cpu_1000", |b| {
+        b.iter_batched(
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 1_000)),
+            |(mesh, handle)| {
+                mesh.send_to(2, 12345).unwrap();
+                handle.join().unwrap();
+            },
+            criterion::BatchSize::PerIteration,
+        )
+    });
+
+    c.bench_function("rotate_a_usize_between_3_cpu_10_000", |b| {
+        b.iter_batched(
+            || (Arc::clone(&mesh), execute_round(Arc::clone(&mesh), 1_000)),
+            |(mesh, handle)| {
+                mesh.send_to(2, 12345).unwrap();
+                handle.join().unwrap();
+            },
             criterion::BatchSize::PerIteration,
         )
     });

@@ -21,7 +21,9 @@ on the runtime, so you should be able to use it with other runtime and also
 without `io-uring`.
 
 The purpose of this library is to have a performant way to send data between
-thread when threads are following a `thread per core` architecture.
+thread when threads are following a `thread per core` architecture. Even if the
+aim is to be performant remember it's a core to core passing, (or thread to
+thread), which is really slow.
 
 Thanks to [Glommio](https://github.com/DataDog/glommio/) for the inspiration.
 

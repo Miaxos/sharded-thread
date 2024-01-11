@@ -62,10 +62,9 @@ impl<T> Sender<T> {
     pub fn send(&self, item: T) {
         self.queue
             .task_queue
-            .fetch_add(1, std::sync::atomic::Ordering::Acquire);
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         self.queue.queue.push_back(item);
         self.queue.waker.wake();
-        fence(std::sync::atomic::Ordering::Release)
     }
 }
 
@@ -86,12 +85,12 @@ impl<T> Stream for Receiver<T> {
         let old = self
             .queue
             .task_queue
-            .load(std::sync::atomic::Ordering::Acquire);
+            .load(std::sync::atomic::Ordering::Relaxed);
 
         if old > 0 {
             self.queue
                 .task_queue
-                .fetch_sub(1, std::sync::atomic::Ordering::Release);
+                .fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
             let item = self.queue.queue.pop_front_or_spin_wait_item();
             Poll::Ready(Some(item))
         } else {
