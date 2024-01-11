@@ -18,5 +18,3 @@ thiserror = "1"
 [dev-dependencies]
 cfg-if = "1"
 monoio = { version = "0.2", features = ["sync"] }
-insta = "1"                   # A snapshot testing library for Rust
-lazy_static = "1.4"            # A macro for declaring lazily evaluated statics in Rust.
