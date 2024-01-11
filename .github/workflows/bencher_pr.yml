@@ -5,6 +5,7 @@ permissions:
 
 jobs:
   benchmark_pr_with_bencher:
+    permissions: write-all
     name: Continuous Benchmarking with Bencher
     runs-on: ubuntu-latest
     env:
