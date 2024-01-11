@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::thread::JoinHandle;
 use std::u128;
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use futures::StreamExt;
 use sharded_thread::mesh::MeshBuilder;
 
@@ -70,7 +70,8 @@ fn execute_round<T: Send + 'static>(
     mesh: Arc<MeshBuilder<T>>,
     count_max: usize,
 ) -> JoinHandle<()> {
-    let handle = std::thread::spawn(move || {
+    
+    std::thread::spawn(move || {
         // We lock the thread for the core
         monoio::utils::bind_to_cpu_set(Some(2)).unwrap();
         let mut rt = monoio::RuntimeBuilder::<Driver>::new()
@@ -97,8 +98,7 @@ fn execute_round<T: Send + 'static>(
             });
             handle.await
         })
-    });
-    handle
+    })
 }
 
 fn bench_round(c: &mut Criterion) {

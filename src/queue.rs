@@ -1,4 +1,4 @@
-use std::sync::atomic::{fence, AtomicUsize};
+use std::sync::atomic::{AtomicUsize};
 use std::sync::Arc;
 use std::task::Poll;
 
