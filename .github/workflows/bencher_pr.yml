@@ -2,8 +2,6 @@ on: pull_request
 
 permissions:
   issues: write
-  pull-requests: write
-  contents: write
 
 jobs:
   benchmark_pr_with_bencher:
@@ -11,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BENCHER_PROJECT: sharded-thread
+      BENCHER_TESTBED: github-actions
       BENCHER_ADAPTER: rust_criterion
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +21,7 @@ jobs:
           --if-branch "$GITHUB_REF_NAME" \
           --else-if-branch "$GITHUB_BASE_REF" \
           --else-if-branch main \
-          --github-actions "${{ secrets.GITHUB_TOKEN }}" \
+          --github-actions "${{ secrets.token }}" \
           --token "${{ secrets.BENCHER_API_TOKEN }}" \
           --err \
           "cargo bench"

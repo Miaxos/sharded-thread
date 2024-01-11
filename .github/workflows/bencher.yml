@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BENCHER_PROJECT: sharded-thread
+      BENCHER_TESTBED: github-actions
       BENCHER_ADAPTER: rust_criterion
     steps:
       - uses: actions/checkout@v4
