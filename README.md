@@ -35,11 +35,6 @@ want to change the thread handling the stream.
     <img src="./.github/ressources/sharded-thread.drawio.svg" width="60%" />
 </p>
 
-It allows you to avoid sharing data between thread, and so avoid a lot of issues
-like false sharing[^2].
-
-[^2]: An excellent article explaining it: [alic.dev](https://alic.dev/blog/false-sharing).
-
 You can check some examples in the tests.
 
 ## References
