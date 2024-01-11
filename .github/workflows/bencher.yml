@@ -18,6 +18,7 @@ jobs:
       - name: Track Benchmarks with Bencher
         run: |
           bencher run \
+          -iter 16 \
           --branch "$GITHUB_REF_NAME" \
           --token "${{ secrets.BENCHER_API_TOKEN }}" \
           --err \
