@@ -1,7 +1,7 @@
 use futures::task::AtomicWaker;
 use futures::Stream;
 use sharded_queue::ShardedQueue;
-use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::{fence, AtomicUsize};
 use std::sync::Arc;
 
 use std::task::Poll;
@@ -14,6 +14,8 @@ pub struct SharedQueueThreaded<T> {
 }
 
 impl<T> SharedQueueThreaded<T> {
+    /// Create a new `SharedQueueThreaded` by specifing the number of thread how can physically
+    /// access the queue = the number of CPU core available for the application.
     pub fn new(max_concurrent_thread_count: usize) -> std::io::Result<Arc<Self>> {
         let waker = AtomicWaker::new();
         Ok(Arc::new(Self {
@@ -57,9 +59,10 @@ impl<T> Sender<T> {
     pub fn send(&self, item: T) {
         self.queue
             .task_queue
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            .fetch_add(1, std::sync::atomic::Ordering::Acquire);
         self.queue.queue.push_back(item);
         self.queue.waker.wake();
+        fence(std::sync::atomic::Ordering::Release)
     }
 }
 
@@ -80,12 +83,12 @@ impl<T> Stream for Receiver<T> {
         let old = self
             .queue
             .task_queue
-            .load(std::sync::atomic::Ordering::Relaxed);
+            .load(std::sync::atomic::Ordering::Acquire);
 
         if old > 0 {
             self.queue
                 .task_queue
-                .fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
+                .fetch_sub(1, std::sync::atomic::Ordering::Release);
             let item = self.queue.queue.pop_front_or_spin_wait_item();
             Poll::Ready(Some(item))
         } else {

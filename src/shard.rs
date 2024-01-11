@@ -31,6 +31,8 @@ impl<T> Shard<T> {
     }
 
     /// Send a value to the proper shard
+    ///
+    /// Fail if this Shard did not join yet.
     pub fn send_to(&self, val: T, shard: usize) -> Result<(), SenderError> {
         let max_shard = self.max_shard.load(std::sync::atomic::Ordering::Acquire);
 
@@ -45,5 +47,15 @@ impl<T> Shard<T> {
 
         sender.send(val);
         Ok(())
+    }
+
+    /// Send a value to a shard
+    pub fn send_to_unchecked(&self, val: T, shard: usize) -> () {
+        let sender = self
+            .senders
+            .get(shard)
+            .expect("the sender should have been here but he is not.");
+
+        sender.send(val);
     }
 }

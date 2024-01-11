@@ -1,4 +1,5 @@
 use std::os::fd::{FromRawFd, IntoRawFd, RawFd};
+use std::sync::Arc;
 use std::thread::scope;
 use std::time::Duration;
 
@@ -6,7 +7,6 @@ use futures::StreamExt;
 
 use monoio::io::{AsyncReadRentExt, AsyncWriteRent};
 use monoio::net::{TcpListener, TcpStream};
-use sharded_thread::queue::SharedQueueChannels;
 use sharded_thread::{mesh::MeshBuilder, shard::Shard};
 
 cfg_if::cfg_if! {
@@ -21,61 +21,58 @@ cfg_if::cfg_if! {
 fn ensure_messages_are_sent_through_the_shard() {
     type Msg = i32;
 
-    let mesh = MeshBuilder::<Msg>::new().unwrap();
-    scope(|scope| {
-        let cpus: usize = 0;
-        let mesh = &mesh;
+    let mesh = Arc::new(MeshBuilder::<Msg>::new(1).unwrap());
 
-        let mut handles = Vec::new();
-        for cpu in 0..cpus {
-            let handle = scope.spawn(move || {
-                monoio::utils::bind_to_cpu_set(Some(cpu)).unwrap();
-                let mut rt = monoio::RuntimeBuilder::<Driver>::new()
-                    .with_entries(1024)
-                    .enable_timer()
-                    .build()
-                    .expect("Cannot build runtime");
+    let cpus: usize = 0;
 
-                let shard: Shard<Msg> = mesh.join_with(cpu).unwrap();
+    let mut handles = Vec::new();
+    for cpu in 0..cpus {
+        let mesh = mesh.clone();
+        let handle = std::thread::spawn(move || {
+            monoio::utils::bind_to_cpu_set(Some(cpu)).unwrap();
 
-                rt.block_on(async move {
-                    let handle = monoio::spawn(async move {
-                        let r = shard.receiver();
-                        let mut r = r.unwrap();
+            let mut rt = monoio::RuntimeBuilder::<Driver>::new()
+                .with_entries(1024)
+                .enable_timer()
+                .build()
+                .expect("Cannot build runtime");
 
-                        let val = r.next().await.unwrap();
-                        assert_eq!(val, 12);
-                        let val = r.next().await.unwrap();
-                        assert_eq!(val, 1);
-                    });
-                    handle.await
-                })
-            });
+            let shard: Shard<Msg> = mesh.join_with(cpu).unwrap();
 
-            handles.push(handle);
-        }
+            rt.block_on(async move {
+                let handle = monoio::spawn(async move {
+                    let r = shard.receiver();
+                    let mut r = r.unwrap();
 
-        for i in handles {
-            let r = i.join();
-            assert!(r.is_ok());
-        }
+                    let val = r.next().await.unwrap();
+                    assert_eq!(val, 12);
+                    let val = r.next().await.unwrap();
+                    assert_eq!(val, 1);
+                });
+                handle.await
+            })
+        });
 
-        let pos = mesh
-            .shared_joined
-            .load(std::sync::atomic::Ordering::Acquire);
-        assert_eq!(pos, cpus);
+        handles.push(handle);
+    }
 
-        let chan = &mesh.channels[0].sender();
-        chan.send(12);
-        chan.send(1);
-    });
+    for i in handles {
+        let r = i.join();
+        assert!(r.is_ok());
+    }
+
+    let pos = mesh.members();
+    assert_eq!(pos, cpus);
+
+    mesh.send_to(0, 12).unwrap();
+    mesh.send_to(0, 1).unwrap();
 }
 
 #[test]
 fn load_balance_tcp() {
     type Msg = RawFd;
 
-    let mesh = MeshBuilder::<Msg>::new().unwrap();
+    let mesh = MeshBuilder::<Msg>::new(3).unwrap();
     scope(|scope| {
         let cpus: usize = 3;
         let mesh = &mesh;
