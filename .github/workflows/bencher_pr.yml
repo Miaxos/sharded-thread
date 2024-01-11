@@ -1,0 +1,30 @@
+on: pull_request
+
+permissions:
+  issues: write
+
+jobs:
+  benchmark_pr_with_bencher:
+    permissions: write-all
+    name: Continuous Benchmarking with Bencher
+    runs-on: ubuntu-latest
+    env:
+      BENCHER_PROJECT: sharded-thread
+      BENCHER_TESTBED: github-actions
+      BENCHER_ADAPTER: rust_criterion
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bencherdev/bencher@main
+      - name: Track Benchmarks with Bencher
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bencher run \
+          --iter 1 \
+          --if-branch "$GITHUB_REF_NAME" \
+          --else-if-branch "$GITHUB_BASE_REF" \
+          --else-if-branch main \
+          --github-actions "$GITHUB_TOKEN" \
+          --token "${{ secrets.BENCHER_API_TOKEN }}" \
+          --err \
+          "cargo bench"
