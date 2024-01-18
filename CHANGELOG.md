@@ -6,6 +6,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0](https://github.com/Miaxos/sharded-thread/compare/v1.0.2...v1.1.0) - 2024-01-18
+
+### Added
+- add some benchmarks
+- add bencher
+- add a bench to follow improvement
+
+### Fixed
+- ci
+- typo on benchert
+
+### Other
+- clippy + reduce iter to 2 in PR
+- add flume benchmarks
+- fmt
+- clippy
+- add some other benches
+- iter to 16
+- write-all
+- just crying
+- test fucking github token
+- fix github token
+- add proper testbed
+- add new permissions
+- add issues permissions
+- upate README.md
+- fix permissions
+- width to 60%
+- update README.md
+
 ## [1.0.2](https://github.com/Miaxos/sharded-thread/compare/v1.0.1...v1.0.2) - 2024-01-11
 
 ### Other
