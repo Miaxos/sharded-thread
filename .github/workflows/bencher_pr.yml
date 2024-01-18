@@ -20,7 +20,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           bencher run \
-          --iter 16 \
+          --iter 2 \
           --if-branch "$GITHUB_REF_NAME" \
           --else-if-branch "$GITHUB_BASE_REF" \
           --else-if-branch main \

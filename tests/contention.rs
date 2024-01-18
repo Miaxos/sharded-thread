@@ -50,7 +50,7 @@ fn contention() {
                             while let Some(val) = receiver.next().await {
                                 println!("Received {val} on CPU {peer}");
                                 // In this example we break at the begining
-                                return ();
+                                return;
                             }
                         },
                     )
