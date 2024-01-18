@@ -368,7 +368,7 @@ fn execute_round_flume<T: Send + 'static>(
             .build()
             .expect("Cannot build runtime");
 
-        let (tx1, _) = senders.get(0).cloned().unwrap();
+        let (tx1, _) = senders.first().cloned().unwrap();
         let (_, rx3) = senders.get(2).cloned().unwrap();
         rt.block_on(async move {
             let handle = monoio::spawn(async move {
