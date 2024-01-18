@@ -20,6 +20,7 @@ thiserror = "1"
 cfg-if = "1"
 criterion = { version = "0.5", features = ["async", "html_reports"] }
 monoio = { version = "0.2", features = ["sync"] }
+flume = "0.11"
 
 [[bench]]
 name = "sharding_direct"
