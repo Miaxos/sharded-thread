@@ -2,6 +2,7 @@
 //! channels.
 
 use std::cell::Cell;
+use std::fmt::Debug;
 use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
 
@@ -15,6 +16,12 @@ pub struct MeshBuilder<T> {
     nr_peers: usize,
     pub(crate) channels: Vec<Arc<SharedQueueThreaded<T>>>,
     pub(crate) shared_joined: Arc<AtomicUsize>,
+}
+
+impl<T> Debug for MeshBuilder<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "MeshBuilder")
+    }
 }
 
 impl<T> MeshBuilder<T> {
