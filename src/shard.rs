@@ -1,4 +1,5 @@
 use std::cell::Cell;
+use std::fmt::Debug;
 use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
 
@@ -19,6 +20,12 @@ pub struct Shard<T> {
     /// Actual shard id
     #[allow(dead_code)]
     pub(crate) shard_id: usize,
+}
+
+impl<T> Debug for Shard<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Shard")
+    }
 }
 
 impl<T> Shard<T> {
