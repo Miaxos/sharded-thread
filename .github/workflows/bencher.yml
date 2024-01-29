@@ -1,6 +1,6 @@
 on:
   schedule:
-    - cron: '18 * * * *'
+    - cron: '18 0 * * *'
   push:
     branches:
       - main
@@ -20,6 +20,7 @@ jobs:
         run: |
           bencher run \
           --iter 16 \
+          --fold min \
           --branch "$GITHUB_REF_NAME" \
           --token "${{ secrets.BENCHER_API_TOKEN }}" \
           --err \

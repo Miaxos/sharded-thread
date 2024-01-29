@@ -1,11 +1,10 @@
 on: pull_request
 
-permissions:
-  issues: write
-
 jobs:
   benchmark_pr_with_bencher:
-    permissions: write-all
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      pull-requests: write
     name: Continuous Benchmarking with Bencher
     runs-on: ubuntu-latest
     env:
@@ -21,6 +20,7 @@ jobs:
         run: |
           bencher run \
           --iter 2 \
+          --fold min \
           --if-branch "$GITHUB_REF_NAME" \
           --else-if-branch "$GITHUB_BASE_REF" \
           --else-if-branch main \
