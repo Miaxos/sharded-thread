@@ -750,7 +750,7 @@ dependencies = [
 
 [[package]]
 name = "sharded-thread"
-version = "1.3.0"
+version = "1.3.1"
 dependencies = [
  "cfg-if",
  "criterion",
